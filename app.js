@@ -98,7 +98,7 @@
             }, 2000);
         }
 
-        showToast('🎉 全屏撒钱！恭喜发财！ 💰');
+        showToast('🎉 You got this !');
     }
 
     const titleGroup = $('titleGroup');
