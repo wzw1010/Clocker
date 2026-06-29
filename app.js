@@ -7,7 +7,8 @@
     const STORAGE_PREFIX = 'wh_v53_';
     const SALARY_PREFIX = 'sc_v45_';
     const DEF_NORMAL = 8, DEF_OVERTIME = 4;
-    const FULL_HOURS_KEY = 'fh_v35';
+    // ✅ 改动：不再使用固定键名，改用动态函数生成
+    // const FULL_HOURS_KEY = 'fh_v35';
     const THEME_KEY = 'theme_pref';
 
     let year, month, data = [];
@@ -119,6 +120,9 @@
     const getFirstDay = (y,m) => new Date(y,m-1,1).getDay();
     const getKey = () => STORAGE_PREFIX + year + '_' + month;
     const getSalaryKey = () => SALARY_PREFIX + year + '_' + month;
+    
+    // ✅ 改动：生成按年月独立的标准工时存储键
+    const getFullHoursKey = (y, m) => `fh_v35_${y}_${m}`;
 
     function loadData() {
         const raw = localStorage.getItem(getKey());
@@ -151,11 +155,34 @@
         }
     }
     function saveSalaryConfig(){ localStorage.setItem(getSalaryKey(), JSON.stringify(salaryConfig)); }
-    function loadFullHours(){
-        try{ const v = localStorage.getItem(FULL_HOURS_KEY); if(v !== null) fullWorkHours = parseInt(v); }catch(e){}
-        if(isNaN(fullWorkHours) || fullWorkHours < 0) fullWorkHours = 0;
+    
+    // ✅ 改动：loadFullHours 现在接收年月参数
+    function loadFullHours(y, m) {
+        const key = getFullHoursKey(y, m);
+        let val = localStorage.getItem(key);
+        // 兼容旧版：如果当前月没有独立存储，尝试读取旧全局键 'fh_v35'
+        if (val === null) {
+            const oldKey = 'fh_v35';
+            val = localStorage.getItem(oldKey);
+            if (val !== null) {
+                // 如果旧键存在，自动迁移到新键，并删除旧键（避免干扰）
+                localStorage.setItem(key, val);
+                localStorage.removeItem(oldKey);
+            }
+        }
+        if (val !== null) {
+            const parsed = parseInt(val);
+            fullWorkHours = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+        } else {
+            fullWorkHours = 0; // 默认值
+        }
     }
-    function saveFullHours(){ localStorage.setItem(FULL_HOURS_KEY, fullWorkHours.toString()); }
+    
+    // ✅ 改动：saveFullHours 现在接收年月参数
+    function saveFullHours(y, m) {
+        const key = getFullHoursKey(y, m);
+        localStorage.setItem(key, fullWorkHours.toString());
+    }
 
     function computeWorkStats(){
         let normalTotal = 0, overtimeTotal = 0, holidayTotal = 0;
@@ -484,8 +511,12 @@
             });
             const saveFull = () => {
                 const val = parseFloat(input.value);
-                if (!isNaN(val) && val >= 0) { fullWorkHours = val; saveFullHours(); renderAll(); }
-                else input.value = fullWorkHours;
+                if (!isNaN(val) && val >= 0) { 
+                    fullWorkHours = val; 
+                    // ✅ 改动：保存时传入当前年月
+                    saveFullHours(year, month); 
+                    renderAll(); 
+                } else input.value = fullWorkHours;
                 fullWrapper.classList.remove('editing');
             };
             input.addEventListener('blur', saveFull);
@@ -576,7 +607,10 @@
         if (ny < 2026 || (ny === 2026 && nm < 1)) return;
         if (ny > 2099) return;
         year = ny; month = nm;
-        loadData(); loadSalaryConfig();
+        loadData(); 
+        loadSalaryConfig();
+        // ✅ 改动：切换月份时重新加载该月的标准工时
+        loadFullHours(year, month);
         const max = getDays(year,month);
         if (selectedDay == null || selectedDay < 0 || selectedDay >= max) {
             const today = new Date();
@@ -590,8 +624,15 @@
         const backup = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && (key.startsWith(STORAGE_PREFIX) || key.startsWith(SALARY_PREFIX) || key === FULL_HOURS_KEY))
-                backup[key] = localStorage.getItem(key);
+            if (key) {
+                // ✅ 改动：匹配所有排班、薪酬、以及标准工时（旧键+新动态键）
+                if (key.startsWith(STORAGE_PREFIX) || 
+                    key.startsWith(SALARY_PREFIX) || 
+                    key === 'fh_v35' || 
+                    key.startsWith('fh_v35_')) {
+                    backup[key] = localStorage.getItem(key);
+                }
+            }
         }
         const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
@@ -611,17 +652,25 @@
             try {
                 const obj = JSON.parse(e.target.result);
                 if (typeof obj !== 'object' || obj === null) throw new Error('Invalid format');
+                // ✅ 改动：清除所有相关键（排班、薪酬、标准工时旧键+新动态键）
                 for (let i = localStorage.length - 1; i >= 0; i--) {
                     const key = localStorage.key(i);
-                    if (key && (key.startsWith(STORAGE_PREFIX) || key.startsWith(SALARY_PREFIX) || key === FULL_HOURS_KEY))
+                    if (key && (key.startsWith(STORAGE_PREFIX) || 
+                                key.startsWith(SALARY_PREFIX) || 
+                                key === 'fh_v35' || 
+                                key.startsWith('fh_v35_'))) {
                         localStorage.removeItem(key);
+                    }
                 }
                 for (const [key, value] of Object.entries(obj)) localStorage.setItem(key, value);
                 const today = new Date();
                 let initYear = today.getFullYear(), initMonth = today.getMonth() + 1;
                 if (initYear < 2026) { initYear = 2026; initMonth = 1; }
                 year = initYear; month = initMonth;
-                loadData(); loadSalaryConfig(); loadFullHours();
+                loadData(); 
+                loadSalaryConfig();
+                // ✅ 改动：恢复后重新加载当前月的标准工时
+                loadFullHours(year, month);
                 const max = getDays(year, month);
                 selectedDay = (today.getFullYear() === year && today.getMonth()+1 === month) ? today.getDate()-1 : 0;
                 if (selectedDay >= max) selectedDay = 0;
@@ -648,7 +697,10 @@
         if (initYear < 2026 || (initYear === 2026 && initMonth < 1)) { initYear = 2026; initMonth = 1; }
         year = initYear; month = initMonth;
         selectedDay = (now.getFullYear() === year && now.getMonth()+1 === month) ? now.getDate()-1 : 0;
-        loadData(); loadSalaryConfig(); loadFullHours();
+        loadData(); 
+        loadSalaryConfig();
+        // ✅ 改动：初始化加载当前月的标准工时
+        loadFullHours(year, month);
         bindStaticEvents();
         renderAll();
 
