@@ -6,7 +6,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Clocker">
-    <meta name="theme-color" content="#FF5E3A" id="themeColorMeta">
+    <meta name="theme-color" content="#FF5E3A" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#FF6B44" media="(prefers-color-scheme: light)">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-512.png">
     <title>Clocker</title>
@@ -24,6 +25,7 @@
             --color-overtime: #5ac8fa;
             --color-salary: #F0B90B;
             --accent: #FF5E3A;
+            --color-manual: #FF9F0A;
             --color-work: #68D4AA;
             --color-night: #8E8FFF;
             --color-rest: #AEAEB2;
@@ -64,6 +66,7 @@
             --text-secondary: rgba(0, 0, 0, 0.55);
             --text-tertiary: rgba(0, 0, 0, 0.35);
             --accent: #FF5E3A;
+            --color-manual: #E08800;
             --color-work: #34A87A;
             --color-night: #6A6BDF;
             --color-rest: #8E8E93;
@@ -83,16 +86,16 @@
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
         html { height:100%; }
         body {
-            font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            font-family: system-ui, -apple-system, 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100dvh;
             -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
             padding-top: calc(var(--header-height) + var(--safe-top) + 8px);
             padding-bottom: calc(12px + var(--safe-bottom));
             position: relative;
         }
+        body.modal-open { overflow: hidden; }
 
         .app { max-width:480px; margin:0 auto; padding:0 var(--space-md); position:relative; z-index:1; }
 
@@ -127,7 +130,7 @@
             border: 1px solid var(--menu-border);
             border-radius: var(--radius-sm); box-shadow: var(--shadow);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            padding: 4px; display: none; flex-direction: column; min-width: 160px; z-index: 20;
+            padding: 4px; display: none; flex-direction: column; min-width: 170px; z-index: 20;
         }
         .dropdown-menu.show { display: flex; }
         .dropdown-menu button {
@@ -136,7 +139,7 @@
             font-weight: 500; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; width: 100%;
         }
         .dropdown-menu button:active { background: var(--bg-input); }
-        .dropdown-menu button svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+        .dropdown-menu button svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
         .dropdown-menu .divider { height: 1px; background: var(--border-card); margin: 4px 8px; }
 
         .scroll-content { padding-top:var(--space-sm); }
@@ -154,13 +157,14 @@
             position: relative; z-index: 1;
         }
         .stat-left { display:flex; flex-direction:column; gap:2px; flex:1; }
-        .stat-label { font-size:var(--font-caption); color:var(--text-secondary); font-weight:600; letter-spacing:0.3px; }
+        .stat-label { font-size:var(--font-caption); color:var(--text-secondary); font-weight:600; letter-spacing:0.3px; text-transform:uppercase; }
         .stat-value { font-size:var(--font-large); font-weight:700; color:var(--text-primary); line-height:1.1; }
         .stat-right { display:flex; align-items:center; gap:8px; }
         .stat-right svg.stat-icon { width:44px; height:44px; stroke:currentColor; fill:none; stroke-width:1.8; }
         .progress-ring { width:44px; height:44px; }
         .progress-ring circle { fill:none; stroke-width:5; stroke-linecap:round; }
         .ring-bg { stroke:rgba(128,128,128,0.15); }
+        .ring-fill { transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
         #workHoursSection .stat-value { color: var(--color-hours); }
         #workHoursSection .ring-fill { stroke: var(--color-hours); }
@@ -183,6 +187,7 @@
         .section.open .card-body-inner { opacity: 1; }
         .section.open .stat-header .chevron { transform: rotate(90deg); }
         .section.open .stat-header { border-bottom: 1px solid var(--border-card); }
+        .chevron { transition: transform 0.25s ease; }
 
         .overtime-row, .detail-row {
             display:flex; justify-content:space-between; align-items:center;
@@ -219,15 +224,22 @@
         .reset-icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
 
         .salary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-sm); padding:var(--space-sm) 0; }
-        .salary-item { background:var(--bg-input); border-radius:var(--radius-sm); padding:var(--space-sm); text-align:center; }
+        .salary-item { background:var(--bg-input); border-radius:var(--radius-sm); padding:var(--space-sm); text-align:center; position:relative; }
         .salary-item .item-label {
-            font-size:10px; color:var(--text-secondary); display:block; margin-bottom:4px;
+            font-size:10px; color:var(--text-secondary); display:flex; align-items:center; justify-content:center; gap:4px; margin-bottom:4px;
         }
+        .salary-item .item-label svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:1.5; }
         .salary-item .item-input {
             background:transparent; border:none; color:var(--text-primary);
             font-size:var(--font-body); font-weight:600; text-align:center;
             width:100%; outline:none; font-family:inherit;
         }
+        .salary-item .item-input.manual { color: var(--color-manual); }
+        .salary-item .auto-hint {
+            position:absolute; top:6px; right:8px; font-size:9px;
+            color:var(--text-tertiary); font-weight:600;
+        }
+        .salary-item .item-input.manual ~ .auto-hint { color: var(--color-manual); }
 
         .calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:var(--space-md); }
         .cal-day {
@@ -314,6 +326,7 @@
             font-size:var(--font-caption); z-index:200; opacity:0; transition:0.3s;
             box-shadow:var(--shadow); pointer-events:none;
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            white-space: nowrap;
         }
         .toast-msg.show { opacity:1; bottom:calc(30px + var(--safe-bottom)); }
         .calendar-section { transition:opacity 0.25s; }
@@ -324,6 +337,9 @@
             .nav-header, .modal-overlay, .toast-msg, .dropdown-menu { display:none!important; }
             .app { max-width:100%; padding:0 10px; }
             .section { box-shadow:none; border:1px solid #ccc; background:white!important; break-inside:avoid; }
+            .card-body-wrapper { height: auto !important; }
+            .card-body-inner { opacity: 1 !important; }
+            .chevron { display: none; }
             .stat-value, .detail-value, .overtime-value { color:black!important; }
             .stat-label, .detail-label, .overtime-label { color:#555!important; }
             .cal-day { background:#f0f0f0!important; border:1px solid #ddd!important; color:black!important; }
@@ -334,15 +350,11 @@
         }
     </style>
     <script>
-        /* 跟随系统主题：进入页面立即应用，避免闪烁 */
         (function(){
             var mq = window.matchMedia('(prefers-color-scheme: light)');
             function apply() {
-                var light = mq.matches;
-                if (light) document.documentElement.setAttribute('data-theme', 'light');
+                if (mq.matches) document.documentElement.setAttribute('data-theme', 'light');
                 else document.documentElement.removeAttribute('data-theme');
-                var meta = document.getElementById('themeColorMeta');
-                if (meta) meta.setAttribute('content', light ? '#FF6B44' : '#FF5E3A');
             }
             apply();
             if (mq.addEventListener) mq.addEventListener('change', apply);
@@ -361,6 +373,19 @@
 <template id="icon-reset"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></template>
 <template id="icon-arrowLeft"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="12"/><line x1="6" y1="12" x2="18" y2="18"/></svg></template>
 <template id="icon-arrowRight"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="6" y1="6" x2="18" y2="12"/><line x1="18" y1="12" x2="6" y2="18"/></svg></template>
+<template id="icon-baseSalary"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="12" cy="12" r="2"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/></svg></template>
+<template id="icon-performance"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></template>
+<template id="icon-otherDeduction"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></template>
+<template id="icon-otherAllowance"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></template>
+<template id="icon-insurance"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></template>
+<template id="icon-personalTax"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="2" y1="8" x2="22" y2="8"/><line x1="12" y1="3" x2="12" y2="17"/></svg></template>
+<template id="icon-meal"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></template>
+<template id="icon-nightAllow"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/><circle cx="12" cy="10" r="3"/><line x1="12" y1="3" x2="12" y2="5"/><line x1="12" y1="17" x2="12" y2="19"/></svg></template>
+<template id="icon-rent"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></template>
+<template id="icon-mealFee"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M5 3v18"/><path d="M5 7h4a4 4 0 0 1 0 8H5"/><circle cx="17" cy="12" r="4"/></svg></template>
+<template id="icon-highTemp"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></template>
+<template id="icon-seniority"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/><line x1="12" y1="8" x2="12" y2="15"/><line x1="8" y1="11" x2="16" y2="11"/></svg></template>
+<template id="icon-globe"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></template>
 
 <div class="app">
     <div class="nav-header">
@@ -368,23 +393,31 @@
             <span class="header-title">Clocker</span>
         </div>
         <div class="nav-actions">
-            <button class="more-btn" id="moreBtn" aria-label="更多">
+            <button class="more-btn" id="moreBtn" aria-label="More">
                 <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2.5">
                     <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
                 </svg>
             </button>
             <div class="dropdown-menu" id="dropdownMenu">
-                <button id="menuPrevMonth"><span id="menuPrevIcon"></span> 上个月</button>
-                <button id="menuNextMonth"><span id="menuNextIcon"></span> 下个月</button>
+                <button id="menuPrevMonth"><span id="menuPrevIcon"></span><span data-i18n="prevMonth">Prev Month</span></button>
+                <button id="menuNextMonth"><span id="menuNextIcon"></span><span data-i18n="nextMonth">Next Month</span></button>
+                <div class="divider"></div>
+                <button id="menuSwitchLang">
+                    <span id="langBtnIcon"></span>
+                    <span id="langBtnText">English</span>
+                </button>
                 <div class="divider"></div>
                 <button id="menuExportBackup">
-                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>导出备份
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span data-i18n="exportBackup">Export Backup</span>
                 </button>
                 <button id="menuImportBackup">
-                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>导入备份
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span data-i18n="importBackup">Import Backup</span>
                 </button>
                 <button id="menuClearData">
-                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>清空本月
+                    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    <span data-i18n="clearMonth">Clear Month</span>
                 </button>
             </div>
         </div>
@@ -395,16 +428,16 @@
 <div class="modal-overlay" id="editModalOverlay">
     <div class="modal-content">
         <div class="modal-shift-selector" id="modalShiftSelector">
-            <button class="shift-option-big" data-shift="work"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" stroke="currentColor" fill="none"/><line x1="12" y1="1" x2="12" y2="4" stroke="currentColor"/><line x1="4" y1="12" x2="1" y2="12" stroke="currentColor"/><line x1="20" y1="12" x2="23" y2="12" stroke="currentColor"/></svg><span class="shift-text">白班</span></button>
-            <button class="shift-option-big" data-shift="night"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" fill="none"/></svg><span class="shift-text">夜班</span></button>
-            <button class="shift-option-big" data-shift="rest"><svg viewBox="0 0 24 24"><path d="M13 3h-2v6h2V3z" stroke="currentColor" fill="none"/><path d="M4 12h16" stroke="currentColor"/><path d="M6 12v6h12v-6" stroke="currentColor"/></svg><span class="shift-text">休息</span></button>
-            <button class="shift-option-big" data-shift="holiday"><svg viewBox="0 0 24 24"><polygon points="12,2 15,8 22,9 17,14 18,21 12,17 6,21 7,14 2,9 9,8" stroke="currentColor" fill="none"/></svg><span class="shift-text">节假日</span></button>
+            <button class="shift-option-big" data-shift="work"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" stroke="currentColor" fill="none"/><line x1="12" y1="1" x2="12" y2="4" stroke="currentColor"/><line x1="4" y1="12" x2="1" y2="12" stroke="currentColor"/><line x1="20" y1="12" x2="23" y2="12" stroke="currentColor"/></svg><span class="shift-text" data-i18n="day">Day</span></button>
+            <button class="shift-option-big" data-shift="night"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" fill="none"/></svg><span class="shift-text" data-i18n="nightShift">Night</span></button>
+            <button class="shift-option-big" data-shift="rest"><svg viewBox="0 0 24 24"><path d="M13 3h-2v6h2V3z" stroke="currentColor" fill="none"/><path d="M4 12h16" stroke="currentColor"/><path d="M6 12v6h12v-6" stroke="currentColor"/></svg><span class="shift-text" data-i18n="rest">Rest</span></button>
+            <button class="shift-option-big" data-shift="holiday"><svg viewBox="0 0 24 24"><polygon points="12,2 15,8 22,9 17,14 18,21 12,17 6,21 7,14 2,9 9,8" stroke="currentColor" fill="none"/></svg><span class="shift-text" data-i18n="holidayShift">Holiday</span></button>
         </div>
         <div class="modal-hours-row">
-            <input type="number" class="input-field" id="modalNormal" step="any" placeholder="正常工时" inputmode="decimal">
-            <input type="number" class="input-field" id="modalOvertime" step="any" placeholder="加班工时" inputmode="decimal">
+            <input type="number" class="input-field" id="modalNormal" min="0" max="24" step="any" data-i18n-placeholder="normalHrs" placeholder="Normal hrs" inputmode="decimal">
+            <input type="number" class="input-field" id="modalOvertime" min="0" max="24" step="any" data-i18n-placeholder="overtimeHrs" placeholder="Overtime hrs" inputmode="decimal">
         </div>
-        <button class="btn-save" id="modalSaveBtn">保存</button>
+        <button class="btn-save" id="modalSaveBtn" data-i18n="save">Save</button>
     </div>
 </div>
 <div id="toastMsg" class="toast-msg"></div>
@@ -412,24 +445,171 @@
 
 <script>
 (function(){
-    function getIcon(id) {
-        const tpl = document.getElementById(`icon-${id}`);
-        return tpl ? tpl.innerHTML : '';
-    }
+    'use strict';
 
+    // ===== 常量 =====
     const STORAGE_PREFIX = 'wh_v53_';
     const SALARY_PREFIX = 'sc_v45_';
+    const FULL_HOURS_PREFIX = 'fh_v35_';
+    const FULL_HOURS_LEGACY = 'fh_v35';
+    const EXPANDED_KEY = 'expanded_sections_v1';
+    const LANG_KEY = 'lang_pref';
     const DEF_NORMAL = 8, DEF_OVERTIME = 4;
+    const MIN_YEAR = 2026, MAX_YEAR = 2099;
+    const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+    // ===== 内置标准工时表 =====
+    // 规则：实际工作日（周一至周五，扣除法定节假日，加上调休补班）× 8 小时
+    // 数据来源：2026 年国务院放假安排
+    const BUILTIN_HOURS = {
+        '2026_1': 168,  // 元旦 1/1 放假，1/4 周日补班
+        '2026_2': 128,  // 春节 9 天假，2/14、2/28 两个周六补班
+        '2026_3': 176,
+        '2026_4': 168,  // 清明 4/4-4/6
+        '2026_5': 152,  // 劳动节 5 天假，5/9 周六补班
+        '2026_6': 168,  // 端午 6/19-6/21
+        '2026_7': 184,
+        '2026_8': 168,
+        '2026_9': 176,
+        '2026_10': 144, // 国庆 7 天假，9/20、10/10 两个周末补班
+        '2026_11': 168,
+        '2026_12': 184
+    };
+
+    // ===== i18n 字典 =====
+    const I18N = {
+        en: {
+            prevMonth: 'Prev Month',
+            nextMonth: 'Next Month',
+            exportBackup: 'Export Backup',
+            importBackup: 'Import Backup',
+            clearMonth: 'Clear Month',
+            paidHours: 'Paid Hours',
+            fullLabel: 'Full',
+            otPay: 'OT Pay',
+            regular: 'Regular',
+            holidayLabel: 'Holiday',
+            netSalary: 'Net Salary',
+            gross: 'Gross',
+            normal: 'Normal',
+            overtime: 'Overtime',
+            holiday: 'Holiday',
+            fullTime: 'Full-time',
+            regularOT: 'Regular OT',
+            holidayOT: 'Holiday OT',
+            manual: 'Manual',
+            resetAuto: 'Reset to auto',
+            base: 'Base',
+            perf: 'Perf.',
+            deduct: 'Deduct',
+            allow: 'Allow.',
+            insurance: 'Insurance',
+            tax: 'Tax',
+            meal: 'Meal',
+            night: 'Night',
+            rent: 'Rent',
+            dining: 'Dining',
+            heat: 'Heat',
+            seniority: 'Seniority',
+            day: 'Day',
+            nightShift: 'Night',
+            rest: 'Rest',
+            holidayShift: 'Holiday',
+            normalHrs: 'Normal hrs',
+            overtimeHrs: 'Overtime hrs',
+            save: 'Save',
+            calDay: 'Day',
+            calNight: 'Night',
+            calRest: 'Rest',
+            calHoliday: 'Hol',
+            hoursSaved: 'Hours saved',
+            setTo: 'Set to ',
+            monthCleared: 'Month cleared',
+            backupExported: 'Backup exported',
+            backupRestored: 'Backup restored',
+            storageFull: 'Storage full',
+            newVersion: 'New version available',
+            eggText: '🎉 You got this!',
+            confirmClear: 'Clear all scheduling and hours data for the current month? This only affects the current month.',
+            invalidBackup: 'Invalid or corrupted backup file'
+        },
+        zh: {
+            prevMonth: '上个月',
+            nextMonth: '下个月',
+            exportBackup: '导出备份',
+            importBackup: '导入备份',
+            clearMonth: '清空本月',
+            paidHours: '计薪工时',
+            fullLabel: '标准',
+            otPay: '加班费',
+            regular: '平时',
+            holidayLabel: '节假日',
+            netSalary: '实发工资',
+            gross: '应发',
+            normal: '正常',
+            overtime: '加班',
+            holiday: '节假日',
+            fullTime: '标准工时',
+            regularOT: '平时加班',
+            holidayOT: '节假日加班',
+            manual: '手动调整',
+            resetAuto: '恢复自动计算',
+            base: '基本工资',
+            perf: '绩效',
+            deduct: '其他扣款',
+            allow: '其他补贴',
+            insurance: '社保',
+            tax: '个税',
+            meal: '餐补',
+            night: '夜班补贴',
+            rent: '房租',
+            dining: '餐费',
+            heat: '高温补贴',
+            seniority: '工龄补贴',
+            day: '白班',
+            nightShift: '夜班',
+            rest: '休息',
+            holidayShift: '节假日',
+            normalHrs: '正常工时',
+            overtimeHrs: '加班工时',
+            save: '保存',
+            calDay: '白班',
+            calNight: '夜班',
+            calRest: '休息',
+            calHoliday: '节假',
+            hoursSaved: '已保存',
+            setTo: '已设为',
+            monthCleared: '本月已清空',
+            backupExported: '备份已导出',
+            backupRestored: '备份已恢复',
+            storageFull: '存储空间不足',
+            newVersion: '新版本可用',
+            eggText: '🎉 加油！',
+            confirmClear: '确定要清空本月的排班与工时数据吗？仅影响当前月份。',
+            invalidBackup: '备份文件无效或已损坏'
+        }
+    };
+
+    let currentLang = 'zh';
+    function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || key; }
+
+    // ===== 状态 =====
     let year, month, data = [];
     let selectedDay = null;
     let fullWorkHours = 0;
-    let salaryConfig = {
-        baseSalary:0, performance:0, otherDeduction:0, otherAllowance:0,
-        insuranceDeduction:0, personalTax:0, manualOvertimePay:null,
-        rentDeduction:0, mealFeeDeduction:0, highTempAllowance:0, seniorityAllowance:0,
-        nightAllowanceManual:null
-    };
+    let salaryConfig = createDefaultSalaryConfig();
+
+    function createDefaultSalaryConfig() {
+        return {
+            baseSalary: 0, performance: 0, otherDeduction: 0, otherAllowance: 0,
+            insuranceDeduction: 0, personalTax: 0,
+            manualOvertimePay: null,
+            rentDeduction: 0, mealFeeDeduction: 0,
+            highTempAllowance: 0, seniorityAllowance: 0,
+            mealManual: null,
+            nightAllowanceManual: null
+        };
+    }
 
     const $ = id => document.getElementById(id);
     const cardsWrapper = $('cardsWrapper');
@@ -438,62 +618,306 @@
     const dropdownMenu = $('dropdownMenu');
     const moreBtn = $('moreBtn');
 
-    function showToast(msg) {
-        toastEl.textContent = msg; toastEl.classList.add('show');
-        clearTimeout(toastEl._timeout);
-        toastEl._timeout = setTimeout(() => toastEl.classList.remove('show'), 1800);
+    function safeGet(key) {
+        try { return localStorage.getItem(key); } catch(e) { return null; }
+    }
+    function safeSet(key, value) {
+        try { localStorage.setItem(key, value); return true; }
+        catch(e) { showToast(t('storageFull')); return false; }
+    }
+    function safeRemove(key) {
+        try { localStorage.removeItem(key); } catch(e) {}
     }
 
-    // ========== 彩蛋逻辑（全屏版） ==========
-    let easterEggClicks = 0;
-    let easterEggTimer = null;
-    function triggerEasterEgg() {
-        const emojis = ['💰', '✨', '🌟', '💵', '🪙', '💎', '🎉', '🧧'];
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
+    let toastTimer = null;
+    function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+    }
 
-        for (let i = 0; i < 35; i++) {
-            const particle = document.createElement('span');
-            particle.textContent = emojis[i % emojis.length];
-            const angle = Math.random() * 2 * Math.PI;
-            const distance = 150 + Math.random() * 350;
-            const dx = Math.cos(angle) * distance;
-            const dy = Math.sin(angle) * distance - 120;
-            particle.style.cssText = `
-                position: fixed;
-                left: ${centerX}px;
-                top: ${centerY}px;
-                font-size: ${24 + Math.random() * 36}px;
-                pointer-events: none;
-                z-index: 9999;
-                transition: all 1.6s cubic-bezier(0.15, 0.8, 0.2, 1);
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(0.5);
-            `;
-            document.body.appendChild(particle);
-            requestAnimationFrame(() => {
-                particle.style.transform = `translate(${dx}px, ${dy}px) scale(1) rotate(${Math.random() * 720}deg)`;
-                particle.style.opacity = '0';
-            });
-            setTimeout(() => particle.remove(), 1800);
+    function getIcon(id) {
+        const tpl = document.getElementById('icon-' + id);
+        return tpl ? tpl.innerHTML : '';
+    }
+    const icons = {
+        clock: getIcon('clock'), plus: getIcon('plus'), star: getIcon('star'), check: getIcon('check'),
+        coin: getIcon('coin'), starCoin: getIcon('starCoin'), pencil: getIcon('pencil'), reset: getIcon('reset'),
+        baseSalary: getIcon('baseSalary'), performance: getIcon('performance'),
+        otherDeduction: getIcon('otherDeduction'), otherAllowance: getIcon('otherAllowance'),
+        insurance: getIcon('insurance'), personalTax: getIcon('personalTax'),
+        meal: getIcon('meal'), nightAllow: getIcon('nightAllow'), rent: getIcon('rent'),
+        mealFee: getIcon('mealFee'), highTemp: getIcon('highTemp'), seniority: getIcon('seniority'),
+        globe: getIcon('globe')
+    };
+
+    // ===== 语言应用 =====
+    function applyI18nToDom() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            el.textContent = t(el.dataset.i18n);
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            el.placeholder = t(el.dataset.i18nPlaceholder);
+        });
+        document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+        const langBtnText = $('langBtnText');
+        if (langBtnText) langBtnText.textContent = currentLang === 'zh' ? 'English' : '中文';
+        const langBtnIcon = $('langBtnIcon');
+        if (langBtnIcon) langBtnIcon.innerHTML = icons.globe;
+    }
+
+    function setLang(lang) {
+        if (lang !== 'en' && lang !== 'zh') return;
+        currentLang = lang;
+        safeSet(LANG_KEY, lang);
+    }
+
+    function initLang() {
+        const saved = safeGet(LANG_KEY);
+        if (saved === 'en' || saved === 'zh') { currentLang = saved; return; }
+        const nav = (navigator.language || navigator.userLanguage || '').toLowerCase();
+        currentLang = nav.indexOf('zh') === 0 ? 'zh' : 'en';
+    }
+
+    function toggleLang() {
+        const next = currentLang === 'zh' ? 'en' : 'zh';
+        setLang(next);
+        applyI18nToDom();
+        renderAll();
+        showToast(next === 'en' ? 'Switched to English' : '已切换为中文');
+    }
+
+    // ===== 日期工具 =====
+    const getDays = (y, m) => new Date(y, m, 0).getDate();
+    const getFirstDay = (y, m) => new Date(y, m - 1, 1).getDay();
+    const getDataKey = () => STORAGE_PREFIX + year + '_' + month;
+    const getSalaryKey = () => SALARY_PREFIX + year + '_' + month;
+    const getFullHoursKey = (y, m) => FULL_HOURS_PREFIX + y + '_' + m;
+
+    // ===== 数据加载/保存 =====
+    function loadData() {
+        const raw = safeGet(getDataKey());
+        const days = getDays(year, month);
+        data = [];
+        if (raw) {
+            try {
+                const p = JSON.parse(raw);
+                data = Array.isArray(p.rows) ? p.rows : [];
+            } catch(e) { data = []; }
         }
+        data.forEach(d => {
+            if (!d || typeof d !== 'object') d = {};
+            d.shift = d.shift || '';
+            d.normal = d.normal || 0;
+            d.overtime = d.overtime || 0;
+        });
+        while (data.length < days) data.push({ shift:'', normal:0, overtime:0 });
+        if (data.length > days) data.length = days;
+    }
+    function saveData() {
+        safeSet(getDataKey(), JSON.stringify({ year, month, rows: data }));
+    }
+    function clearCurrentMonth() {
+        if (confirm(t('confirmClear'))) {
+            data = Array(getDays(year, month)).fill(null).map(() => ({ shift:'', normal:0, overtime:0 }));
+            saveData();
+            refreshAll();
+            showToast(t('monthCleared'));
+        }
+    }
+    function loadSalaryConfig() {
+        salaryConfig = createDefaultSalaryConfig();
+        const raw = safeGet(getSalaryKey());
+        if (raw) {
+            try {
+                const s = JSON.parse(raw);
+                salaryConfig = Object.assign(salaryConfig, s);
+            } catch(e) {}
+        }
+    }
+    function saveSalaryConfig() {
+        safeSet(getSalaryKey(), JSON.stringify(salaryConfig));
+    }
 
+    // 标准工时加载：用户手动值优先，其次内置表，最后 0
+    function loadFullHours(y, m) {
+        const key = getFullHoursKey(y, m);
+        let val = safeGet(key);
+        // 旧版全局键迁移
+        if (val === null) {
+            const legacy = safeGet(FULL_HOURS_LEGACY);
+            if (legacy !== null) {
+                safeSet(key, legacy);
+                safeRemove(FULL_HOURS_LEGACY);
+                val = legacy;
+            }
+        }
+        // 用户手动值优先
+        if (val !== null) {
+            const parsed = parseFloat(val);
+            fullWorkHours = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+            return;
+        }
+        // 无手动值，查内置表
+        const builtin = BUILTIN_HOURS[y + '_' + m];
+        fullWorkHours = typeof builtin === 'number' ? builtin : 0;
+    }
+    function saveFullHours(y, m) {
+        safeSet(getFullHoursKey(y, m), String(fullWorkHours));
+    }
+
+    // ===== 计算 =====
+    function computeWorkStats() {
+        let normalTotal = 0, overtimeTotal = 0, holidayTotal = 0;
+        data.forEach(d => {
+            const n = d.normal || 0, o = d.overtime || 0;
+            normalTotal += n;
+            if (d.shift === 'holiday') holidayTotal += o;
+            else overtimeTotal += o;
+        });
+        return { total: normalTotal + overtimeTotal, normalTotal, overtimeTotal, holidayTotal };
+    }
+
+    function computeOvertimeSalary() {
+        let nonHoliday = 0, holidayOvt = 0;
+        data.forEach(d => {
+            if (d.shift === 'holiday') { holidayOvt += (d.overtime || 0); return; }
+            nonHoliday += (d.normal || 0) + (d.overtime || 0);
+        });
+        const overtimeHrs = Math.max(0, nonHoliday - fullWorkHours);
+        const rate = salaryConfig.baseSalary / 21.75 / 8;
+        const normalPay = rate * 1.5 * overtimeHrs;
+        const holidayPay = rate * 3 * holidayOvt;
+        const autoPay = normalPay + holidayPay;
+        const finalPay = salaryConfig.manualOvertimePay !== null
+            ? salaryConfig.manualOvertimePay
+            : autoPay;
+        return {
+            overtimeHours: overtimeHrs,
+            holidayOvertimeHours: holidayOvt,
+            normalOvertimePay: normalPay,
+            holidayOvertimePay: holidayPay,
+            autoOvertimePay: autoPay,
+            finalOvertimePay: finalPay,
+            hourRate: rate
+        };
+    }
+
+    function computeSalary() {
+        const oRes = computeOvertimeSalary();
+        const totalAllHours = data.reduce((s, d) => s + (d.normal || 0) + (d.overtime || 0), 0);
+        const autoMeal = totalAllHours * 1;
+        const meal = salaryConfig.mealManual !== null ? salaryConfig.mealManual : autoMeal;
+        const nightCount = data.filter(d => d.shift === 'night').length;
+        const autoNight = nightCount * 30;
+        const nightAllow = salaryConfig.nightAllowanceManual !== null
+            ? salaryConfig.nightAllowanceManual
+            : autoNight;
+        const gross = salaryConfig.baseSalary + salaryConfig.performance + salaryConfig.otherAllowance
+            + meal + oRes.finalOvertimePay + nightAllow
+            + salaryConfig.highTempAllowance + salaryConfig.seniorityAllowance
+            - salaryConfig.otherDeduction - salaryConfig.rentDeduction - salaryConfig.mealFeeDeduction;
+        const net = gross - salaryConfig.insuranceDeduction - salaryConfig.personalTax;
+        return { gross, net, meal, autoMeal, nightAllow, autoNight, overtimeRes: oRes };
+    }
+
+    function saveExpandedState() {
+        const ids = [...document.querySelectorAll('.section.open')].map(s => s.id).filter(Boolean);
+        safeSet(EXPANDED_KEY, JSON.stringify(ids));
+    }
+    function restoreExpandedState() {
+        const raw = safeGet(EXPANDED_KEY);
+        if (!raw) return;
+        try {
+            const ids = JSON.parse(raw);
+            if (!Array.isArray(ids)) return;
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.classList.add('open');
+                const w = el.querySelector('.card-body-wrapper');
+                if (w) w.style.height = 'auto';
+            });
+        } catch(e) {}
+    }
+
+    // ===== 弹窗 =====
+    function openModal(idx) {
+        selectedDay = idx;
+        const row = data[idx] || { shift:'', normal:0, overtime:0 };
+        document.querySelectorAll('#modalShiftSelector .shift-option-big')
+            .forEach(b => b.classList.toggle('active', b.dataset.shift === row.shift));
+        $('modalNormal').value = row.normal;
+        $('modalOvertime').value = row.overtime;
+        modalOverlay.classList.add('show');
+        document.body.classList.add('modal-open');
+        setTimeout(() => $('modalOvertime').focus(), 400);
+    }
+    function closeModal() {
+        modalOverlay.classList.remove('show');
+        document.body.classList.remove('modal-open');
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    }
+    function saveModal() {
+        if (selectedDay === null) return;
+        data[selectedDay].normal = clamp(parseFloat($('modalNormal').value) || 0, 0, 24);
+        data[selectedDay].overtime = clamp(parseFloat($('modalOvertime').value) || 0, 0, 24);
+        saveData();
+        closeModal();
+        refreshAll();
+        showToast(t('hoursSaved'));
+    }
+    function setShiftFromModal(shift) {
+        if (selectedDay === null) return;
+        const def = (shift === 'work' || shift === 'night')
+            ? { normal: DEF_NORMAL, overtime: DEF_OVERTIME }
+            : { normal: 0, overtime: 0 };
+        data[selectedDay].shift = shift;
+        data[selectedDay].normal = def.normal;
+        data[selectedDay].overtime = def.overtime;
+        document.querySelectorAll('#modalShiftSelector .shift-option-big')
+            .forEach(b => b.classList.toggle('active', b.dataset.shift === shift));
+        $('modalNormal').value = def.normal;
+        $('modalOvertime').value = def.overtime;
+        saveData();
+        refreshAll();
+        const nameMap = { work: t('day'), night: t('nightShift'), rest: t('rest'), holiday: t('holidayShift') };
+        showToast(t('setTo') + nameMap[shift]);
+    }
+
+    function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
+
+    // ===== 彩蛋 =====
+    let eggClicks = 0, eggTimer = null, eggActive = false;
+    function triggerEasterEgg() {
+        if (eggActive) return;
+        eggActive = true;
+        setTimeout(() => { eggActive = false; }, 2000);
+
+        const emojis = ['💰','✨','🌟','💵','🪙','💎','🎉','🧧'];
+        const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+        for (let i = 0; i < 35; i++) {
+            const p = document.createElement('span');
+            p.textContent = emojis[i % emojis.length];
+            const angle = Math.random() * 2 * Math.PI;
+            const dist = 150 + Math.random() * 350;
+            const dx = Math.cos(angle) * dist;
+            const dy = Math.sin(angle) * dist - 120;
+            p.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;font-size:${24 + Math.random() * 36}px;pointer-events:none;z-index:9999;transition:all 1.6s cubic-bezier(0.15,0.8,0.2,1);opacity:1;transform:translate(-50%,-50%) scale(0.5);`;
+            document.body.appendChild(p);
+            requestAnimationFrame(() => {
+                p.style.transform = `translate(${dx}px,${dy}px) scale(1) rotate(${Math.random() * 720}deg)`;
+                p.style.opacity = '0';
+            });
+            setTimeout(() => p.remove(), 1800);
+        }
         for (let i = 0; i < 10; i++) {
             const big = document.createElement('div');
-            big.textContent = ['💎', '🌟', '🎊'][i % 3];
+            big.textContent = ['💎','🌟','🎊'][i % 3];
             const x = Math.random() * window.innerWidth;
             const y = Math.random() * window.innerHeight;
-            big.style.cssText = `
-                position: fixed;
-                left: ${x}px;
-                top: ${y - 100}px;
-                font-size: 60px;
-                pointer-events: none;
-                z-index: 9998;
-                opacity: 0;
-                transition: all 2s ease-out;
-                transform: scale(0) rotate(0deg);
-            `;
+            big.style.cssText = `position:fixed;left:${x}px;top:${y - 100}px;font-size:60px;pointer-events:none;z-index:9998;opacity:0;transition:all 2s ease-out;transform:scale(0) rotate(0deg);`;
             document.body.appendChild(big);
             requestAnimationFrame(() => {
                 big.style.opacity = '0.9';
@@ -505,174 +929,148 @@
                 setTimeout(() => big.remove(), 500);
             }, 2000);
         }
-
-        showToast('🎉 加油！');
+        showToast(t('eggText'));
     }
-
-    const titleGroup = $('titleGroup');
-    if (titleGroup) {
-        titleGroup.addEventListener('click', (e) => {
-            easterEggClicks++;
-            clearTimeout(easterEggTimer);
-            if (easterEggClicks >= 5) {
+    (function bindEgg() {
+        const tg = $('titleGroup');
+        if (!tg) return;
+        tg.addEventListener('click', () => {
+            eggClicks++;
+            clearTimeout(eggTimer);
+            if (eggClicks >= 5) {
                 triggerEasterEgg();
-                easterEggClicks = 0;
+                eggClicks = 0;
             }
-            easterEggTimer = setTimeout(() => { easterEggClicks = 0; }, 2000);
+            eggTimer = setTimeout(() => { eggClicks = 0; }, 2000);
         });
+    })();
+
+    function fmtNum(v) { return v === 0 ? '0' : (typeof v === 'number' ? v.toFixed(1) : v); }
+
+    function getWatermark() {
+        return currentLang === 'en' ? MONTHS_EN[month - 1] : String(month);
     }
-    // ========== 彩蛋逻辑结束 ==========
 
-    const getDays = (y,m) => new Date(y,m,0).getDate();
-    const getFirstDay = (y,m) => new Date(y,m-1,1).getDay();
-    const getKey = () => STORAGE_PREFIX + year + '_' + month;
-    const getSalaryKey = () => SALARY_PREFIX + year + '_' + month;
-    const getFullHoursKey = (y, m) => `fh_v35_${y}_${m}`;
+    // 判断当前标准工时是否来自内置表（未被用户手动覆盖）
+    function isBuiltinFullHours() {
+        const key = getFullHoursKey(year, month);
+        return safeGet(key) === null && typeof BUILTIN_HOURS[year + '_' + month] === 'number';
+    }
 
-    function loadData() {
-        const raw = localStorage.getItem(getKey());
+    // ===== 骨架构建 =====
+    function buildSkeleton() {
+        const stats = computeWorkStats();
+        const pct = fullWorkHours > 0 ? Math.min(100, stats.total / fullWorkHours * 100) : 0;
+        const circ = 2 * Math.PI * 18;
+        const off = circ - (pct / 100) * circ;
+        const sal = computeSalary();
+        const oRes = sal.overtimeRes;
+
+        cardsWrapper.innerHTML = `
+            <div class="section" id="workHoursSection">
+                <div class="card-watermark">${getWatermark()}</div>
+                <div class="stat-header" data-toggle="workHours">
+                    <div class="stat-left">
+                        <span class="stat-label">${t('paidHours')}</span>
+                        <span class="stat-value" id="statTotalHours">${stats.total.toFixed(1)}</span>
+                        <span style="font-size:var(--font-caption);color:var(--text-tertiary);" id="statStdHours">${t('fullLabel')} ${fullWorkHours.toFixed(1)}</span>
+                    </div>
+                    <div class="stat-right">
+                        <svg class="progress-ring" viewBox="0 0 44 44">
+                            <circle class="ring-bg" cx="22" cy="22" r="18"/>
+                            <circle class="ring-fill" id="ringFill" cx="22" cy="22" r="18" stroke-dasharray="${circ}" stroke-dashoffset="${off}" transform="rotate(-90 22 22)"/>
+                        </svg>
+                        <svg class="chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" stroke="currentColor" fill="none"/></svg>
+                    </div>
+                </div>
+                <div class="card-body-wrapper"><div class="card-body-inner">
+                    <div class="detail-row"><span class="detail-label">${icons.clock} ${t('normal')}</span><span class="detail-value" id="detailNormal">${stats.normalTotal.toFixed(1)} h</span></div>
+                    <div class="detail-row"><span class="detail-label">${icons.plus} ${t('overtime')}</span><span class="detail-value" id="detailOvertime">${stats.overtimeTotal.toFixed(1)} h</span></div>
+                    <div class="detail-row"><span class="detail-label">${icons.star} ${t('holiday')}</span><span class="detail-value" id="detailHoliday">${stats.holidayTotal.toFixed(1)} h</span></div>
+                    <div class="detail-row"><span class="detail-label">${icons.check} ${t('fullTime')}</span><span class="detail-value"><span class="editable-full-hours" id="fullHoursWrapper"><span class="display-text" id="fullHoursDisplay">${fullWorkHours.toFixed(1)} h</span><input type="number" step="any" min="0" inputmode="decimal" id="fullHoursInput"><svg class="edit-icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span></span></div>
+                </div></div>
+            </div>
+
+            <div class="section" id="overtimePaySection">
+                <div class="stat-header" data-toggle="overtimePay">
+                    <div class="stat-left">
+                        <span class="stat-label">${t('otPay')}</span>
+                        <span class="stat-value" id="statOvertimePay">${oRes.finalOvertimePay.toFixed(1)}</span>
+                        <span style="font-size:var(--font-caption);color:var(--text-tertiary);" id="statOvertimeSub">${t('regular')} ${oRes.normalOvertimePay.toFixed(1)} | ${t('holidayLabel')} ${oRes.holidayOvertimePay.toFixed(1)}</span>
+                    </div>
+                    <div class="stat-right">
+                        <svg class="stat-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <svg class="chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" stroke="currentColor" fill="none"/></svg>
+                    </div>
+                </div>
+                <div class="card-body-wrapper"><div class="card-body-inner">
+                    <div class="overtime-row"><span class="overtime-label">${icons.coin} ${t('regularOT')}</span><span class="overtime-value" id="valNormalOT">${oRes.normalOvertimePay.toFixed(1)}</span></div>
+                    <div class="overtime-row"><span class="overtime-label">${icons.starCoin} ${t('holidayOT')}</span><span class="overtime-value" id="valHolidayOT">${oRes.holidayOvertimePay.toFixed(1)}</span></div>
+                    <div class="detail-row" style="border-bottom:none;padding-top:10px;">
+                        <span class="detail-label">${icons.pencil} ${t('manual')}</span>
+                        <span class="detail-value" style="display:flex;align-items:center;gap:6px;">
+                            <span class="editable-manual-overtime" id="manualOvertimeWrapper"><span class="display-text" id="manualOvertimeDisplay">${salaryConfig.manualOvertimePay !== null ? salaryConfig.manualOvertimePay.toFixed(1) : '0'}</span><input type="number" step="any" inputmode="decimal" id="manualOvertimeInput"><svg class="edit-icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
+                            <button class="reset-icon-btn" id="resetOvertimeBtn" title="${t('resetAuto')}">${icons.reset}</button>
+                        </span>
+                    </div>
+                </div></div>
+            </div>
+
+            <div class="section" id="salarySection">
+                <div class="stat-header" data-toggle="salary">
+                    <div class="stat-left">
+                        <span class="stat-label">${t('netSalary')}</span>
+                        <span class="stat-value" id="statNetSalary">${sal.net.toFixed(1)}</span>
+                        <span style="font-size:var(--font-caption);color:var(--text-tertiary);" id="statGrossSalary">${t('gross')} ${sal.gross.toFixed(1)}</span>
+                    </div>
+                    <div class="stat-right">
+                        <svg class="stat-icon" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                        <svg class="chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" stroke="currentColor" fill="none"/></svg>
+                    </div>
+                </div>
+                <div class="card-body-wrapper"><div class="card-body-inner">
+                    <div class="salary-grid">
+                        <div class="salary-item"><span class="item-label">${icons.baseSalary} ${t('base')}</span><input class="item-input" id="inpBaseSalary" type="number" min="0" step="any" inputmode="decimal" value="${fmtNum(salaryConfig.baseSalary)}"></div>
+                        <div class="salary-item"><span class="item-label">${icons.performance} ${t('perf')}</span><input class="item-input" id="inpPerformance" type="number" min="0" step="any" inputmode="decimal" value="${fmtNum(salaryConfig.performance)}"></div>
+                        <div class="salary-item"><span class="item-label">${icons.otherDeduction} ${t('deduct')}</span><input class="item-input" id="inpOtherDeduction" type="number" min="0" step="any" inputmode="decimal" value="${fmtNum(salaryConfig.otherDeduction)}"></div>
+                        <div class="salary-item"><span class="item-label">${icons.otherAllowance} ${t('allow')}</span><input class="item-input" id="inpOtherAllowance" type="number" min="0" step="any" inputmode="decimal" value="${fmtNum(salaryConfig.otherAllowance)}"></div>
+                        <div class="salary-item"><span class="item-label">${icons.insurance} ${t('insurance')}</span><input class="item-input" id="inpInsurance" type="number" min="0" step="any" inputmode="decimal" value="${fmtNum(salaryConfig.insuranceDeduction)}"></div>
+                        <div class="salary-item"><span class="item-label">${icons.personalTax} ${t('tax')}</span><input class="item-input" id="inpTax" type="number" min="0" step="any" inputmode="decimal" value="${fmtNum(salaryConfig.personalTax)}"></div>
+                        <div class="salary-item"><span class="item-label">${icons.meal} ${t('meal')}</span><input class="item-input ${salaryConfig.mealManual !== null ? 'manual' : ''}" id="inpMeal" type="number" min="0" step="any" inputmode="decimal" value="${fmtNum(sal.meal)}"><span class="auto-hint" id="mealHint">${salaryConfig.mealManual !== null ? 'M' : 'A'}</span></div>
+                        <div class="salary-item"><span class="item-label">${icons.nightAllow} ${t('night')}</span><input class="item-input ${salaryConfig.nightAllowanceManual !== null ? 'manual' : ''}" id="inpNightAllow" type="number" min="0" step="any" inputmode="decimal" value="${fmtNum(sal.nightAllow)}"><span class="auto-hint" id="nightHint">${salaryConfig.nightAllowanceManual !== null ? 'M' : 'A'}</span></div>
+                        <div class="salary-item"><span class="item-label">${icons.rent} ${t('rent')}</span><input class="item-input" id="inpRent" type="number" min="0" step="any" inputmode="decimal" value="${fmtNum(salaryConfig.rentDeduction)}"></div>
+                        <div class="salary-item"><span class="item-label">${icons.mealFee} ${t('dining')}</span><input class="item-input" id="inpMealFee" type="number" min="0" step="any" inputmode="decimal" value="${fmtNum(salaryConfig.mealFeeDeduction)}"></div>
+                        <div class="salary-item"><span class="item-label">${icons.highTemp} ${t('heat')}</span><input class="item-input" id="inpHighTemp" type="number" min="0" step="any" inputmode="decimal" value="${fmtNum(salaryConfig.highTempAllowance)}"></div>
+                        <div class="salary-item"><span class="item-label">${icons.seniority} ${t('seniority')}</span><input class="item-input" id="inpSeniority" type="number" min="0" step="any" inputmode="decimal" value="${fmtNum(salaryConfig.seniorityAllowance)}"></div>
+                    </div>
+                </div></div>
+            </div>
+            <div id="calendarArea" class="calendar-section"></div>
+        `;
+
+        $('menuPrevIcon').innerHTML = getIcon('arrowLeft');
+        $('menuNextIcon').innerHTML = getIcon('arrowRight');
+    }
+
+    function renderCalendar() {
+        const calArea = $('calendarArea');
+        if (!calArea) return;
         const days = getDays(year, month);
-        if(raw){ try{ const p=JSON.parse(raw); data=p.rows||[]; }catch(e){data=[];} }else data=[];
-        data.forEach(d => { d.shift = d.shift || ''; d.normal = d.normal || 0; d.overtime = d.overtime || 0; });
-        while(data.length < days) data.push({shift:'', normal:0, overtime:0});
-        if(data.length > days) data.length = days;
-    }
-    function saveData(){ localStorage.setItem(getKey(), JSON.stringify({year,month,rows:data})); }
-    function clearCurrentMonth(){
-        if(confirm('确定要清空本月的排班与工时数据吗？仅影响当前月份。')){
-            data = Array(getDays(year, month)).fill(null).map(() => ({shift:'', normal:0, overtime:0}));
-            saveData();
-            renderAll();
-            showToast('本月已清空');
+        const first = getFirstDay(year, month);
+        const start = first === 0 ? 6 : first - 1;
+        const labels = { work: t('calDay'), night: t('calNight'), rest: t('calRest'), holiday: t('calHoliday') };
+        let html = '<div class="calendar-grid">';
+        for (let i = 0; i < start; i++) html += '<div class="cal-day empty"></div>';
+        for (let d = 1; d <= days; d++) {
+            const row = data[d - 1] || {};
+            let cls = 'cal-day';
+            if (row.shift) cls += ' ' + row.shift;
+            const corner = hasNonDefaultOvertime(row) ? '<div class="corner-tag"></div>' : '';
+            const label = row.shift ? `<span class="day-label">${labels[row.shift]}</span>` : '';
+            html += `<div class="${cls}" data-day="${d - 1}"><span class="day-number">${d}</span>${label}${corner}</div>`;
         }
-    }
-    function loadSalaryConfig(){
-        salaryConfig = {
-            baseSalary:0, performance:0, otherDeduction:0, otherAllowance:0,
-            insuranceDeduction:0, personalTax:0, manualOvertimePay:null,
-            rentDeduction:0, mealFeeDeduction:0, highTempAllowance:0, seniorityAllowance:0,
-            nightAllowanceManual:null
-        };
-        const key = getSalaryKey();
-        const raw = localStorage.getItem(key);
-        if(raw){
-            try{ const s = JSON.parse(raw); salaryConfig = { ...salaryConfig, ...s }; }catch(e){}
-        }
-    }
-    function saveSalaryConfig(){ localStorage.setItem(getSalaryKey(), JSON.stringify(salaryConfig)); }
-
-    function loadFullHours(y, m) {
-        const key = getFullHoursKey(y, m);
-        let val = localStorage.getItem(key);
-        // 兼容旧版：全局键迁移
-        if (val === null) {
-            const oldKey = 'fh_v35';
-            val = localStorage.getItem(oldKey);
-            if (val !== null) {
-                localStorage.setItem(key, val);
-                localStorage.removeItem(oldKey);
-            }
-        }
-        if (val !== null) {
-            const parsed = parseInt(val);
-            fullWorkHours = isNaN(parsed) || parsed < 0 ? 0 : parsed;
-        } else {
-            fullWorkHours = 0;
-        }
-    }
-
-    function saveFullHours(y, m) {
-        const key = getFullHoursKey(y, m);
-        localStorage.setItem(key, fullWorkHours.toString());
-    }
-
-    function computeWorkStats(){
-        let normalTotal = 0, overtimeTotal = 0, holidayTotal = 0;
-        data.forEach(d => {
-            const n = d.normal || 0, o = d.overtime || 0;
-            normalTotal += n;
-            if(d.shift === 'holiday') holidayTotal += o;
-            else overtimeTotal += o;
-        });
-        return { total: normalTotal + overtimeTotal, normalTotal, overtimeTotal, holidayTotal };
-    }
-
-    function computeOvertimeSalary(){
-        let nonHoliday=0, holidayOvt=0;
-        data.forEach(d => {
-            if(d.shift === 'holiday') { holidayOvt += (d.overtime||0); return; }
-            nonHoliday += (d.normal||0) + (d.overtime||0);
-        });
-        const overtimeHrs = Math.max(0, nonHoliday - fullWorkHours);
-        const rate = salaryConfig.baseSalary / 21.75 / 8;
-        const normalPay = rate * 1.5 * overtimeHrs;
-        const holidayPay = rate * 3 * holidayOvt;
-        const autoPay = normalPay + holidayPay;
-        return {
-            overtimeHours: overtimeHrs, holidayOvertimeHours: holidayOvt,
-            normalOvertimePay: normalPay, holidayOvertimePay: holidayPay,
-            autoOvertimePay: autoPay,
-            finalOvertimePay: salaryConfig.manualOvertimePay !== null ? salaryConfig.manualOvertimePay : autoPay,
-            hourRate: rate
-        };
-    }
-
-    function computeSalary(){
-        const oRes = computeOvertimeSalary();
-        const totalAllHours = data.reduce((sum, d) => sum + (d.normal||0) + (d.overtime||0), 0);
-        const meal = totalAllHours * 1;
-        const nightCount = data.filter(d => d.shift === 'night').length;
-        const autoNight = nightCount * 30;
-        const nightAllow = salaryConfig.nightAllowanceManual !== null ? salaryConfig.nightAllowanceManual : autoNight;
-        const gross = salaryConfig.baseSalary + salaryConfig.performance + salaryConfig.otherAllowance
-            + meal + oRes.finalOvertimePay + nightAllow
-            + salaryConfig.highTempAllowance + salaryConfig.seniorityAllowance
-            - salaryConfig.otherDeduction - salaryConfig.rentDeduction - salaryConfig.mealFeeDeduction;
-        const net = gross - salaryConfig.insuranceDeduction - salaryConfig.personalTax;
-        return { gross, net, meal, nightAllow, autoNight, overtimeRes: oRes };
-    }
-
-    function openModal(idx){
-        selectedDay = idx;
-        const row = data[idx] || { shift:'', normal:0, overtime:0 };
-        document.querySelectorAll('#modalShiftSelector .shift-option-big').forEach(b => b.classList.toggle('active', b.dataset.shift === row.shift));
-        $('modalNormal').value = row.normal;
-        $('modalOvertime').value = row.overtime;
-        modalOverlay.classList.add('show');
-        setTimeout(() => $('modalOvertime').focus(), 400);
-    }
-    function closeModal(){
-        modalOverlay.classList.remove('show');
-        document.activeElement?.blur?.();
-    }
-    function saveModal(){
-        if(selectedDay === null) return;
-        data[selectedDay].normal = Math.min(24, Math.max(0, parseFloat($('modalNormal').value) || 0));
-        data[selectedDay].overtime = Math.min(24, Math.max(0, parseFloat($('modalOvertime').value) || 0));
-        saveData();
-        closeModal();
-        renderAll();
-        showToast('已保存');
-    }
-    function setShiftFromModal(shift){
-        if(selectedDay === null) return;
-        const def = (shift==='work'||shift==='night') ? {normal:DEF_NORMAL, overtime:DEF_OVERTIME} : {normal:0, overtime:0};
-        data[selectedDay].shift = shift;
-        data[selectedDay].normal = def.normal;
-        data[selectedDay].overtime = def.overtime;
-        document.querySelectorAll('#modalShiftSelector .shift-option-big').forEach(b => b.classList.toggle('active', b.dataset.shift === shift));
-        $('modalNormal').value = def.normal;
-        $('modalOvertime').value = def.overtime;
-        saveData();
-        renderAll();
-        const shiftNames = {work:'白班', night:'夜班', rest:'休息', holiday:'节假日'};
-        showToast(`已设为${shiftNames[shift]}`);
-    }
-
-    function updateCalendarVisibility() {
-        const expandedSections = document.querySelectorAll('.section.open');
-        const calendarSection = document.getElementById('calendarArea');
-        if (calendarSection) calendarSection.classList.toggle('hidden', expandedSections.length > 0);
+        html += '</div>';
+        calArea.innerHTML = html;
     }
 
     function hasNonDefaultOvertime(row) {
@@ -680,6 +1078,62 @@
         if (row.shift === 'work' || row.shift === 'night') return ot !== DEF_OVERTIME;
         if (row.shift === 'rest' || row.shift === 'holiday') return ot > 0;
         return false;
+    }
+
+    function refreshAll() {
+        const stats = computeWorkStats();
+        const sal = computeSalary();
+        const oRes = sal.overtimeRes;
+
+        setText('statTotalHours', stats.total.toFixed(1));
+        setText('statStdHours', t('fullLabel') + ' ' + fullWorkHours.toFixed(1));
+        setText('detailNormal', stats.normalTotal.toFixed(1) + ' h');
+        setText('detailOvertime', stats.overtimeTotal.toFixed(1) + ' h');
+        setText('detailHoliday', stats.holidayTotal.toFixed(1) + ' h');
+        setText('fullHoursDisplay', fullWorkHours.toFixed(1) + ' h');
+        const pct = fullWorkHours > 0 ? Math.min(100, stats.total / fullWorkHours * 100) : 0;
+        const circ = 2 * Math.PI * 18;
+        const ring = $('ringFill');
+        if (ring) ring.setAttribute('stroke-dashoffset', circ - pct / 100 * circ);
+
+        setText('statOvertimePay', oRes.finalOvertimePay.toFixed(1));
+        setText('statOvertimeSub', t('regular') + ' ' + oRes.normalOvertimePay.toFixed(1) + ' | ' + t('holidayLabel') + ' ' + oRes.holidayOvertimePay.toFixed(1));
+        setText('valNormalOT', oRes.normalOvertimePay.toFixed(1));
+        setText('valHolidayOT', oRes.holidayOvertimePay.toFixed(1));
+        setText('manualOvertimeDisplay', salaryConfig.manualOvertimePay !== null ? salaryConfig.manualOvertimePay.toFixed(1) : '0');
+
+        setText('statNetSalary', sal.net.toFixed(1));
+        setText('statGrossSalary', t('gross') + ' ' + sal.gross.toFixed(1));
+
+        const mealEl = $('inpMeal');
+        if (mealEl) {
+            if (document.activeElement !== mealEl) mealEl.value = fmtNum(sal.meal);
+            mealEl.classList.toggle('manual', salaryConfig.mealManual !== null);
+        }
+        const mealHint = $('mealHint');
+        if (mealHint) mealHint.textContent = salaryConfig.mealManual !== null ? 'M' : 'A';
+
+        const nightEl = $('inpNightAllow');
+        if (nightEl) {
+            if (document.activeElement !== nightEl) nightEl.value = fmtNum(sal.nightAllow);
+            nightEl.classList.toggle('manual', salaryConfig.nightAllowanceManual !== null);
+        }
+        const nightHint = $('nightHint');
+        if (nightHint) nightHint.textContent = salaryConfig.nightAllowanceManual !== null ? 'M' : 'A';
+
+        renderCalendar();
+        updateCalendarVisibility();
+    }
+
+    function setText(id, txt) {
+        const el = $(id);
+        if (el) el.textContent = txt;
+    }
+
+    function updateCalendarVisibility() {
+        const expanded = document.querySelectorAll('.section.open');
+        const cal = $('calendarArea');
+        if (cal) cal.classList.toggle('hidden', expanded.length > 0);
     }
 
     function toggleCard(section) {
@@ -693,167 +1147,40 @@
         } else {
             section.classList.add('open');
             wrapper.style.height = wrapper.scrollHeight + 'px';
-            const onTransitionEnd = () => {
+            const onEnd = () => {
                 wrapper.style.height = 'auto';
-                wrapper.removeEventListener('transitionend', onTransitionEnd);
+                wrapper.removeEventListener('transitionend', onEnd);
             };
-            wrapper.addEventListener('transitionend', onTransitionEnd);
+            wrapper.addEventListener('transitionend', onEnd);
         }
         updateCalendarVisibility();
+        saveExpandedState();
     }
 
-    const icons = {
-        clock: getIcon('clock'), plus: getIcon('plus'), star: getIcon('star'), check: getIcon('check'),
-        coin: getIcon('coin'), starCoin: getIcon('starCoin'), pencil: getIcon('pencil'), reset: getIcon('reset')
-    };
-
-    function renderAll(){
-        const daysInMonth = getDays(year, month);
-        if (selectedDay === null || selectedDay < 0 || selectedDay >= daysInMonth) {
-            const today = new Date();
-            selectedDay = (today.getFullYear() === year && today.getMonth()+1 === month) ? today.getDate()-1 : 0;
-        }
-        const stats = computeWorkStats();
-        const pct = fullWorkHours > 0 ? Math.min(100, (stats.total / fullWorkHours)*100) : 0;
-        const circ = 2 * Math.PI * 18;
-        const off = circ - (pct/100)*circ;
-
-        const sal = computeSalary();
-        const oRes = sal.overtimeRes;
-
-        const fmt = v => v === 0 ? '0' : v.toFixed(1);
-        const monthNum = String(month);
-
-        cardsWrapper.innerHTML = `
-            <div class="section" id="workHoursSection">
-                <div class="card-watermark">${monthNum}</div>
-                <div class="stat-header" data-toggle="workHours">
-                    <div class="stat-left">
-                        <span class="stat-label">计薪工时</span>
-                        <span class="stat-value">${stats.total.toFixed(1)}</span>
-                        <span style="font-size:var(--font-caption); color:var(--text-tertiary);">标准 ${fullWorkHours.toFixed(1)}</span>
-                    </div>
-                    <div class="stat-right">
-                        <svg class="progress-ring" viewBox="0 0 44 44">
-                            <circle class="ring-bg" cx="22" cy="22" r="18"/>
-                            <circle class="ring-fill" cx="22" cy="22" r="18" stroke-dasharray="${circ}" stroke-dashoffset="${off}" transform="rotate(-90 22 22)"/>
-                        </svg>
-                        <svg class="chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" stroke="currentColor" fill="none"/></svg>
-                    </div>
-                </div>
-                <div class="card-body-wrapper"><div class="card-body-inner">
-                    <div class="detail-row"><span class="detail-label">${icons.clock} 正常</span><span class="detail-value">${stats.normalTotal.toFixed(1)} h</span></div>
-                    <div class="detail-row"><span class="detail-label">${icons.plus} 加班</span><span class="detail-value">${stats.overtimeTotal.toFixed(1)} h</span></div>
-                    <div class="detail-row"><span class="detail-label">${icons.star} 节假日</span><span class="detail-value">${stats.holidayTotal.toFixed(1)} h</span></div>
-                    <div class="detail-row"><span class="detail-label">${icons.check} 标准工时</span><span class="detail-value"><span class="editable-full-hours" id="fullHoursWrapper"><span class="display-text">${fullWorkHours.toFixed(1)} h</span><input type="number" step="any" inputmode="decimal" id="fullHoursInput"><svg class="edit-icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span></span></div>
-                </div></div>
-            </div>
-
-            <div class="section" id="overtimePaySection">
-                <div class="stat-header" data-toggle="overtimePay">
-                    <div class="stat-left">
-                        <span class="stat-label">加班费</span>
-                        <span class="stat-value" id="overtimePayTotal">${oRes.finalOvertimePay.toFixed(1)}</span>
-                        <span style="font-size:var(--font-caption); color:var(--text-tertiary);" id="overtimePaySub">平时 ${oRes.normalOvertimePay.toFixed(1)} | 节假日 ${oRes.holidayOvertimePay.toFixed(1)}</span>
-                    </div>
-                    <div class="stat-right">
-                        <svg class="stat-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                        <svg class="chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" stroke="currentColor" fill="none"/></svg>
-                    </div>
-                </div>
-                <div class="card-body-wrapper"><div class="card-body-inner">
-                    <div class="overtime-row"><span class="overtime-label">${icons.coin} 平时加班</span><span class="overtime-value" id="normalOvertimePayValue">${oRes.normalOvertimePay.toFixed(1)}</span></div>
-                    <div class="overtime-row"><span class="overtime-label">${icons.starCoin} 节假日加班</span><span class="overtime-value" id="holidayOvertimePayValue">${oRes.holidayOvertimePay.toFixed(1)}</span></div>
-                    <div class="detail-row" style="border-bottom: none; padding-top: 10px;">
-                        <span class="detail-label">${icons.pencil} 手动调整</span>
-                        <span class="detail-value" style="display: flex; align-items: center; gap: 6px;">
-                            <span class="editable-manual-overtime" id="manualOvertimeWrapper"><span class="display-text" id="manualOvertimeDisplay">${salaryConfig.manualOvertimePay !== null ? salaryConfig.manualOvertimePay.toFixed(1) : '0'}</span><input type="number" step="any" inputmode="decimal" id="manualOvertimeInput"><svg class="edit-icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
-                            <button class="reset-icon-btn" id="resetOvertimeBtn" title="恢复自动计算">${icons.reset}</button>
-                        </span>
-                    </div>
-                </div></div>
-            </div>
-
-            <div class="section" id="salarySection">
-                <div class="stat-header" data-toggle="salary">
-                    <div class="stat-left">
-                        <span class="stat-label">实发工资</span>
-                        <span class="stat-value" id="netSalaryValue">${sal.net.toFixed(1)}</span>
-                        <span style="font-size:var(--font-caption); color:var(--text-tertiary);">应发 ${sal.gross.toFixed(1)}</span>
-                    </div>
-                    <div class="stat-right">
-                        <svg class="stat-icon" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                        <svg class="chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" stroke="currentColor" fill="none"/></svg>
-                    </div>
-                </div>
-                <div class="card-body-wrapper"><div class="card-body-inner">
-                    <div class="salary-grid">
-                        <div class="salary-item"><span class="item-label">基本工资</span><input class="item-input" id="baseSalary" value="${fmt(salaryConfig.baseSalary)}" step="any" inputmode="decimal"></div>
-                        <div class="salary-item"><span class="item-label">绩效</span><input class="item-input" id="performance" value="${fmt(salaryConfig.performance)}" step="any" inputmode="decimal"></div>
-                        <div class="salary-item"><span class="item-label">其他扣款</span><input class="item-input" id="otherDeduction" value="${fmt(salaryConfig.otherDeduction)}" step="any" inputmode="decimal"></div>
-                        <div class="salary-item"><span class="item-label">其他补贴</span><input class="item-input" id="otherAllowance" value="${fmt(salaryConfig.otherAllowance)}" step="any" inputmode="decimal"></div>
-                        <div class="salary-item"><span class="item-label">社保</span><input class="item-input" id="insurance" value="${fmt(salaryConfig.insuranceDeduction)}" step="any" inputmode="decimal"></div>
-                        <div class="salary-item"><span class="item-label">个税</span><input class="item-input" id="tax" value="${fmt(salaryConfig.personalTax)}" step="any" inputmode="decimal"></div>
-                        <div class="salary-item"><span class="item-label">餐补</span><input class="item-input" id="meal" value="${fmt(sal.meal)}" readonly></div>
-                        <div class="salary-item"><span class="item-label">夜班补贴</span><input class="item-input" id="nightAllow" value="${fmt(sal.nightAllow)}" step="any" inputmode="decimal"></div>
-                        <div class="salary-item"><span class="item-label">房租</span><input class="item-input" id="rent" value="${fmt(salaryConfig.rentDeduction)}" step="any" inputmode="decimal"></div>
-                        <div class="salary-item"><span class="item-label">餐费</span><input class="item-input" id="mealFee" value="${fmt(salaryConfig.mealFeeDeduction)}" step="any" inputmode="decimal"></div>
-                        <div class="salary-item"><span class="item-label">高温补贴</span><input class="item-input" id="highTemp" value="${fmt(salaryConfig.highTempAllowance)}" step="any" inputmode="decimal"></div>
-                        <div class="salary-item"><span class="item-label">工龄补贴</span><input class="item-input" id="seniority" value="${fmt(salaryConfig.seniorityAllowance)}" step="any" inputmode="decimal"></div>
-                    </div>
-                </div></div>
-            </div>
-            <div id="calendarArea" class="calendar-section"></div>
-        `;
-
-        renderCalendar();
-        bindDynamicEvents();
-        updateCalendarVisibility();
-
-        $('menuPrevIcon').innerHTML = getIcon('arrowLeft');
-        $('menuNextIcon').innerHTML = getIcon('arrowRight');
-    }
-
-    function renderCalendar(){
-        const calArea = document.getElementById('calendarArea');
-        const days = getDays(year,month), first = getFirstDay(year,month);
-        let html = '<div class="calendar-grid">';
-        const start = first===0?6:first-1;
-        for(let i=0;i<start;i++) html += '<div class="cal-day empty"></div>';
-        const labels = {work:'白班', night:'夜班', rest:'休息', holiday:'节假'};
-        for(let d=1; d<=days; d++){
-            const row = data[d-1]||{};
-            let cls = 'cal-day';
-            if(row.shift) cls += ' ' + row.shift;
-            const corner = hasNonDefaultOvertime(row) ? '<div class="corner-tag"></div>' : '';
-            html += `<div class="${cls}" data-day="${d-1}"><span class="day-number">${d}</span>${row.shift?`<span class="day-label">${labels[row.shift]}</span>`:''}${corner}</div>`;
-        }
-        html += '</div>';
-        calArea.innerHTML = html;
-    }
-
-    function toggleDropdown(e) { e.stopPropagation(); dropdownMenu.classList.toggle('show'); }
-    function closeDropdown() { dropdownMenu.classList.remove('show'); }
-
+    let boundStatic = false;
     function bindStaticEvents() {
+        if (boundStatic) return;
+        boundStatic = true;
+
         cardsWrapper.addEventListener('click', (e) => {
             const toggleBtn = e.target.closest('[data-toggle]');
-            if (!toggleBtn || e.target.closest('input, button, .editable-full-hours, .editable-manual-overtime')) return;
+            if (!toggleBtn) return;
+            if (e.target.closest('input, button, .editable-full-hours, .editable-manual-overtime')) return;
             const section = toggleBtn.closest('.section');
-            toggleCard(section);
+            if (section) toggleCard(section);
         });
 
         document.querySelectorAll('#modalShiftSelector .shift-option-big').forEach(b => {
-            b.addEventListener('click', ()=> setShiftFromModal(b.dataset.shift));
+            b.addEventListener('click', () => setShiftFromModal(b.dataset.shift));
         });
         $('modalSaveBtn').addEventListener('click', saveModal);
-        modalOverlay.addEventListener('click', e => { if(e.target === modalOverlay) closeModal(); });
+        modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 
-        $('menuPrevMonth').addEventListener('click', (e) => { e.stopPropagation(); changeMonth(-1); closeDropdown(); });
-        $('menuNextMonth').addEventListener('click', (e) => { e.stopPropagation(); changeMonth(1); closeDropdown(); });
-
+        $('menuPrevMonth').addEventListener('click', e => { e.stopPropagation(); changeMonth(-1); closeDropdown(); });
+        $('menuNextMonth').addEventListener('click', e => { e.stopPropagation(); changeMonth(1); closeDropdown(); });
+        $('menuSwitchLang').addEventListener('click', e => { e.stopPropagation(); closeDropdown(); toggleLang(); });
         moreBtn.addEventListener('click', toggleDropdown);
-        document.addEventListener('click', (e) => {
+        document.addEventListener('click', e => {
             if (!moreBtn.contains(e.target) && !dropdownMenu.contains(e.target)) closeDropdown();
         });
 
@@ -864,145 +1191,188 @@
     }
 
     function bindDynamicEvents() {
-        const fullWrapper = $('fullHoursWrapper');
-        if (fullWrapper) {
-            const input = fullWrapper.querySelector('input');
-            fullWrapper.addEventListener('click', (e) => {
-                if (fullWrapper.classList.contains('editing')) return;
+        const fullWrap = $('fullHoursWrapper');
+        if (fullWrap) {
+            const input = fullWrap.querySelector('input');
+            fullWrap.addEventListener('click', (e) => {
+                if (fullWrap.classList.contains('editing')) return;
                 e.stopPropagation();
-                fullWrapper.classList.add('editing');
+                fullWrap.classList.add('editing');
                 input.value = fullWorkHours;
                 input.focus();
             });
-            const saveFull = () => {
-                const val = parseFloat(input.value);
-                if (!isNaN(val) && val >= 0) {
-                    fullWorkHours = val;
+            const commit = () => {
+                const v = parseFloat(input.value);
+                if (!isNaN(v) && v >= 0) {
+                    fullWorkHours = v;
                     saveFullHours(year, month);
-                    renderAll();
-                } else input.value = fullWorkHours;
-                fullWrapper.classList.remove('editing');
+                    refreshAll();
+                } else {
+                    input.value = fullWorkHours;
+                }
+                fullWrap.classList.remove('editing');
             };
-            input.addEventListener('blur', saveFull);
-            input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
+            input.addEventListener('blur', commit);
+            input.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
         }
 
-        const manualWrapper = $('manualOvertimeWrapper');
-        if (manualWrapper) {
-            const input = manualWrapper.querySelector('input');
-            manualWrapper.addEventListener('click', (e) => {
-                if (manualWrapper.classList.contains('editing')) return;
+        const mWrap = $('manualOvertimeWrapper');
+        if (mWrap) {
+            const input = mWrap.querySelector('input');
+            mWrap.addEventListener('click', (e) => {
+                if (mWrap.classList.contains('editing')) return;
                 e.stopPropagation();
-                manualWrapper.classList.add('editing');
-                input.value = salaryConfig.manualOvertimePay !== null ? salaryConfig.manualOvertimePay : 0;
+                mWrap.classList.add('editing');
+                input.value = salaryConfig.manualOvertimePay !== null ? salaryConfig.manualOvertimePay : '';
                 input.focus();
             });
-            const saveManual = () => {
-                const val = parseFloat(input.value);
-                if (!isNaN(val) && val >= 0) salaryConfig.manualOvertimePay = (val === 0) ? null : val;
-                saveSalaryConfig(); updateSalaryDisplay();
-                manualWrapper.classList.remove('editing');
+            const commit = () => {
+                const raw = input.value.trim();
+                if (raw === '') {
+                    salaryConfig.manualOvertimePay = null;
+                } else {
+                    const v = parseFloat(raw);
+                    if (!isNaN(v) && v >= 0) salaryConfig.manualOvertimePay = v;
+                }
+                saveSalaryConfig();
+                refreshAll();
+                mWrap.classList.remove('editing');
             };
-            input.addEventListener('blur', saveManual);
-            input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
+            input.addEventListener('blur', commit);
+            input.addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
         }
 
-        $('resetOvertimeBtn')?.addEventListener('click', () => {
-            salaryConfig.manualOvertimePay = null;
-            saveSalaryConfig(); updateSalaryDisplay();
-            const display = document.getElementById('manualOvertimeDisplay');
-            if (display) display.textContent = '0';
-        });
+        const resetBtn = $('resetOvertimeBtn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                salaryConfig.manualOvertimePay = null;
+                saveSalaryConfig();
+                refreshAll();
+            });
+        }
 
-        const calendarArea = $('calendarArea');
-        calendarArea?.addEventListener('click', (e) => {
-            const dayEl = e.target.closest('.cal-day:not(.empty)');
-            if(!dayEl) return;
-            openModal(parseInt(dayEl.dataset.day));
-        });
+        const calArea = $('calendarArea');
+        if (calArea) {
+            calArea.addEventListener('click', e => {
+                const dayEl = e.target.closest('.cal-day:not(.empty)');
+                if (!dayEl) return;
+                openModal(parseInt(dayEl.dataset.day, 10));
+            });
+        }
 
-        const bindChange = (id, setter) => {
-            const el = $(id); if(!el) return;
-            el.addEventListener('change', ()=>{ setter(parseFloat(el.value)||0); saveSalaryConfig(); updateSalaryDisplay(); });
+        const bindInput = (id, setter) => {
+            const el = $(id);
+            if (!el) return;
+            el.addEventListener('input', () => {
+                const v = parseFloat(el.value) || 0;
+                setter(v);
+                saveSalaryConfig();
+                refreshAll();
+            });
         };
-        bindChange('baseSalary', v=>salaryConfig.baseSalary=v);
-        bindChange('performance', v=>salaryConfig.performance=v);
-        bindChange('otherDeduction', v=>salaryConfig.otherDeduction=v);
-        bindChange('otherAllowance', v=>salaryConfig.otherAllowance=v);
-        bindChange('insurance', v=>salaryConfig.insuranceDeduction=v);
-        bindChange('tax', v=>salaryConfig.personalTax=v);
-        bindChange('rent', v=>salaryConfig.rentDeduction=v);
-        bindChange('mealFee', v=>salaryConfig.mealFeeDeduction=v);
-        bindChange('highTemp', v=>salaryConfig.highTempAllowance=v);
-        bindChange('seniority', v=>salaryConfig.seniorityAllowance=v);
+        bindInput('inpBaseSalary', v => salaryConfig.baseSalary = v);
+        bindInput('inpPerformance', v => salaryConfig.performance = v);
+        bindInput('inpOtherDeduction', v => salaryConfig.otherDeduction = v);
+        bindInput('inpOtherAllowance', v => salaryConfig.otherAllowance = v);
+        bindInput('inpInsurance', v => salaryConfig.insuranceDeduction = v);
+        bindInput('inpTax', v => salaryConfig.personalTax = v);
+        bindInput('inpRent', v => salaryConfig.rentDeduction = v);
+        bindInput('inpMealFee', v => salaryConfig.mealFeeDeduction = v);
+        bindInput('inpHighTemp', v => salaryConfig.highTempAllowance = v);
+        bindInput('inpSeniority', v => salaryConfig.seniorityAllowance = v);
 
-        const nightEl = $('nightAllow');
-        nightEl?.addEventListener('change', function(){
-            const v = this.value.trim();
-            const num = parseFloat(v);
-            salaryConfig.nightAllowanceManual = (v === '' || isNaN(num)) ? null : num;
-            saveSalaryConfig(); updateSalaryDisplay();
-        });
+        const mealEl = $('inpMeal');
+        if (mealEl) {
+            mealEl.addEventListener('input', () => {
+                const raw = mealEl.value.trim();
+                if (raw === '') {
+                    salaryConfig.mealManual = null;
+                } else {
+                    const v = parseFloat(raw);
+                    if (!isNaN(v) && v >= 0) salaryConfig.mealManual = v;
+                }
+                saveSalaryConfig();
+                mealEl.classList.toggle('manual', salaryConfig.mealManual !== null);
+                const hint = $('mealHint');
+                if (hint) hint.textContent = salaryConfig.mealManual !== null ? 'M' : 'A';
+                refreshAll();
+            });
+        }
+
+        const nightEl = $('inpNightAllow');
+        if (nightEl) {
+            nightEl.addEventListener('input', () => {
+                const raw = nightEl.value.trim();
+                if (raw === '') {
+                    salaryConfig.nightAllowanceManual = null;
+                } else {
+                    const v = parseFloat(raw);
+                    if (!isNaN(v) && v >= 0) salaryConfig.nightAllowanceManual = v;
+                }
+                saveSalaryConfig();
+                nightEl.classList.toggle('manual', salaryConfig.nightAllowanceManual !== null);
+                const hint = $('nightHint');
+                if (hint) hint.textContent = salaryConfig.nightAllowanceManual !== null ? 'M' : 'A';
+                refreshAll();
+            });
+        }
     }
 
-    function updateSalaryDisplay(){
-        const sal = computeSalary();
-        const oRes = sal.overtimeRes;
-        const netEl = $('netSalaryValue'); if(netEl) netEl.textContent = sal.net.toFixed(1);
-        const grossEl = document.querySelector('#salarySection .stat-left span:last-child');
-        if(grossEl) grossEl.textContent = `应发 ${sal.gross.toFixed(1)}`;
-        const mealEl = $('meal'); if(mealEl) mealEl.value = sal.meal === 0 ? '0' : sal.meal.toFixed(1);
-        const nightEl = $('nightAllow');
-        if(nightEl && salaryConfig.nightAllowanceManual===null) nightEl.value = sal.autoNight === 0 ? '0' : sal.autoNight.toFixed(1);
-        const otTotal = $('overtimePayTotal'); if(otTotal) otTotal.textContent = oRes.finalOvertimePay.toFixed(1);
-        const otSub = $('overtimePaySub');
-        if(otSub) otSub.textContent = `平时 ${oRes.normalOvertimePay.toFixed(1)} | 节假日 ${oRes.holidayOvertimePay.toFixed(1)}`;
-        const normalPayVal = $('normalOvertimePayValue'); if(normalPayVal) normalPayVal.textContent = oRes.normalOvertimePay.toFixed(1);
-        const holidayPayVal = $('holidayOvertimePayValue'); if(holidayPayVal) holidayPayVal.textContent = oRes.holidayOvertimePay.toFixed(1);
-        const manualDisplay = $('manualOvertimeDisplay');
-        if(manualDisplay) manualDisplay.textContent = salaryConfig.manualOvertimePay !== null ? salaryConfig.manualOvertimePay.toFixed(1) : '0';
-    }
+    function toggleDropdown(e) { e.stopPropagation(); dropdownMenu.classList.toggle('show'); }
+    function closeDropdown() { dropdownMenu.classList.remove('show'); }
 
-    function changeMonth(delta){
-        let nm = month+delta, ny = year;
-        if(nm<1){ nm=12; ny--; }
-        if(nm>12){ nm=1; ny++; }
-        if (ny < 2026 || (ny === 2026 && nm < 1)) return;
-        if (ny > 2099) return;
+    function changeMonth(delta) {
+        let nm = month + delta, ny = year;
+        if (nm < 1) { nm = 12; ny--; }
+        if (nm > 12) { nm = 1; ny++; }
+        if (ny < MIN_YEAR || ny > MAX_YEAR) return;
         year = ny; month = nm;
         loadData();
         loadSalaryConfig();
         loadFullHours(year, month);
-        const max = getDays(year,month);
+        const max = getDays(year, month);
         if (selectedDay == null || selectedDay < 0 || selectedDay >= max) {
             const today = new Date();
-            selectedDay = (today.getFullYear() === year && today.getMonth()+1 === month) ? today.getDate()-1 : 0;
+            selectedDay = (today.getFullYear() === year && today.getMonth() + 1 === month)
+                ? today.getDate() - 1 : 0;
         }
         closeModal();
         renderAll();
+    }
+
+    function renderAll() {
+        buildSkeleton();
+        bindDynamicEvents();
+        refreshAll();
+        restoreExpandedState();
     }
 
     function exportBackup() {
         const backup = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key) {
-                if (key.startsWith(STORAGE_PREFIX) ||
-                    key.startsWith(SALARY_PREFIX) ||
-                    key === 'fh_v35' ||
-                    key.startsWith('fh_v35_')) {
-                    backup[key] = localStorage.getItem(key);
-                }
+            if (!key) continue;
+            if (key.startsWith(STORAGE_PREFIX) ||
+                key.startsWith(SALARY_PREFIX) ||
+                key === FULL_HOURS_LEGACY ||
+                key.startsWith(FULL_HOURS_PREFIX)) {
+                backup[key] = safeGet(key);
             }
         }
-        const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         const now = new Date();
-        const stamp = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
-        a.href = url; a.download = `attendance_backup_${stamp}.json`; a.click();
+        const stamp = now.getFullYear() +
+            String(now.getMonth() + 1).padStart(2, '0') +
+            String(now.getDate()).padStart(2, '0') + '_' +
+            String(now.getHours()).padStart(2, '0') +
+            String(now.getMinutes()).padStart(2, '0');
+        a.href = url;
+        a.download = 'attendance_backup_' + stamp + '.json';
+        a.click();
         URL.revokeObjectURL(url);
-        showToast('备份已导出');
+        showToast(t('backupExported'));
     }
 
     function importBackup(event) {
@@ -1012,52 +1382,76 @@
         reader.onload = function(e) {
             try {
                 const obj = JSON.parse(e.target.result);
-                if (typeof obj !== 'object' || obj === null) throw new Error('Invalid format');
+                if (typeof obj !== 'object' || obj === null) throw new Error('Invalid');
+
                 for (let i = localStorage.length - 1; i >= 0; i--) {
                     const key = localStorage.key(i);
                     if (key && (key.startsWith(STORAGE_PREFIX) ||
                                 key.startsWith(SALARY_PREFIX) ||
-                                key === 'fh_v35' ||
-                                key.startsWith('fh_v35_'))) {
-                        localStorage.removeItem(key);
+                                key === FULL_HOURS_LEGACY ||
+                                key.startsWith(FULL_HOURS_PREFIX))) {
+                        safeRemove(key);
                     }
                 }
-                for (const [key, value] of Object.entries(obj)) localStorage.setItem(key, value);
+                for (const [key, value] of Object.entries(obj)) {
+                    if (typeof key !== 'string' || typeof value !== 'string') continue;
+                    if (key.startsWith(STORAGE_PREFIX) ||
+                        key.startsWith(SALARY_PREFIX) ||
+                        key === FULL_HOURS_LEGACY ||
+                        key.startsWith(FULL_HOURS_PREFIX)) {
+                        safeSet(key, value);
+                    }
+                }
                 const today = new Date();
-                let initYear = today.getFullYear(), initMonth = today.getMonth() + 1;
-                if (initYear < 2026) { initYear = 2026; initMonth = 1; }
-                year = initYear; month = initMonth;
+                let iy = today.getFullYear(), im = today.getMonth() + 1;
+                if (iy < MIN_YEAR) { iy = MIN_YEAR; im = 1; }
+                year = iy; month = im;
                 loadData();
                 loadSalaryConfig();
                 loadFullHours(year, month);
                 const max = getDays(year, month);
-                selectedDay = (today.getFullYear() === year && today.getMonth()+1 === month) ? today.getDate()-1 : 0;
+                selectedDay = (today.getFullYear() === year && today.getMonth() + 1 === month)
+                    ? today.getDate() - 1 : 0;
                 if (selectedDay >= max) selectedDay = 0;
                 renderAll();
-                showToast('备份已恢复');
-            } catch (err) { alert('备份文件无效或已损坏'); }
+                showToast(t('backupRestored'));
+            } catch (err) {
+                alert(t('invalidBackup'));
+            }
         };
         reader.readAsText(file);
         event.target.value = '';
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+        initLang();
+        applyI18nToDom();
+
         const now = new Date();
-        let initYear = now.getFullYear(), initMonth = now.getMonth() + 1;
-        if (initYear < 2026 || (initYear === 2026 && initMonth < 1)) { initYear = 2026; initMonth = 1; }
-        year = initYear; month = initMonth;
-        selectedDay = (now.getFullYear() === year && now.getMonth()+1 === month) ? now.getDate()-1 : 0;
+        let iy = now.getFullYear(), im = now.getMonth() + 1;
+        if (iy < MIN_YEAR) { iy = MIN_YEAR; im = 1; }
+        if (iy > MAX_YEAR) { iy = MAX_YEAR; im = 12; }
+        year = iy; month = im;
+        selectedDay = (now.getFullYear() === year && now.getMonth() + 1 === month)
+            ? now.getDate() - 1 : 0;
         loadData();
         loadSalaryConfig();
         loadFullHours(year, month);
         bindStaticEvents();
         renderAll();
 
-        // ===== Service Worker 注册 =====
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(() => console.log('✅ Clocker SW 注册成功'))
-                .catch(err => console.log('⚠️ SW 注册失败', err));
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                reg.addEventListener('updatefound', () => {
+                    const nw = reg.installing;
+                    if (!nw) return;
+                    nw.addEventListener('statechange', () => {
+                        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                            showToast(t('newVersion'));
+                        }
+                    });
+                });
+            }).catch(err => console.log('SW register failed', err));
         }
     });
 })();
